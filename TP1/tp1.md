@@ -131,7 +131,49 @@ Cada vez que el paquete pasa por un router, el TTL se reduce en 1. Cuando llega 
 
 Si el TTL no existiera, un paquete podría circular sin fin por la red, generando tráfico inútil y hasta saturando enlaces y routers.
 
+# Parte 2: Inyección y detección de errores
 
+Esta segunda parte consistió en aprender en la forma en la que se detectan errores en la transmición de datos.
 
+Uno de nosotros recibió el payload C388, y debía enviarlo al IP de destino 192.168.1.200, que corresponde al compañero con el que estamos realizando esta actividad. 
+La técnica de detección de errores que vamos a utilizar el XOR, por lo tanto nos queda lo siguiente:
 
+C388h -> 1100001100010001b
+
+Y tenemos que hacer el XOR entre los nibbles:
+
+1100 `XOR` 0011 = 1111
+
+1111 `XOR` 1000 = 0111
+
+0111 `XOR` 1000 = 1111
+
+Entonces el CRC es 1111
+
+![frame-ethernet](/TP1/img/Captura%20desde%202026-04-06%2019-12-35.png)
+
+Luego este payload se vio afectado al modificar uno o algunos bits por el profesor. En específico se vio modificado el primer y tercer nibble, siendo el payload ahorta C781. Pero este error lo deberá identificar nuestro compañero que recibió nuestro mensaje.
+
+A nosotros nos llegó un mensaje de el, con un payload y un CRC. Debemos verificar que sea correcto:
+
+![payload-recibido](/TP1/img/Captura%20desde%202026-04-06%2019-17-48.png)
+
+Ya se puede ver en el desarrollo que hicimos en clase pero:
+
+- Payload recibido: F2A0h -> 1111001010100000b
+- CRC: 0000
+
+Lo que tiene en particular es que nuestro compañero utilió bit de paridad para la detección de errores, por lo tanto tenemos que verificar utilizando esta técnica.
+
+La técnica de bit de paridad consiste en asignar un bit en cada nibble según la cantidad par o impar de "1" que tenga. Si tiene una cantidad de "1" par entonces se asigna el bit 0, y si la cantidad es impar se asigna el bit 1.
+Para el payload recibido:
+
+- 1111 -> Cuatro "1", cantidad par -> Bit de paridad 0
+- 0010 -> Un "1", cantidad impar -> Bit de paridad 1
+- 1010 -> Dos "1", cantidad par -> Bit de paridad 0
+- 0000 -> No hay "1", se considera par -> Bit de paridad 0
+
+Entonces nos queda 0100. Pero el CRC dice que es 0000, por lo tanto podemos detectar un error, y podemos ver que es en el tercer nibble (de der. a izq.).
+
+La ventaja del bit de paridad con respecto a XOR es que podemos identificar en que nibble ocurre el error. Pero tiene desventajes considerables:
 
