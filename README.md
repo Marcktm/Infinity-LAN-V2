@@ -6,9 +6,9 @@
 
 ---
 ## Integrantes
+- Barranco Octavio Bautista
 - Brezzo Benjamin
 - Reyeros Marcos Agustin
-- Barranco Octavio Bautista
 
 --- 
 ## Profesores
