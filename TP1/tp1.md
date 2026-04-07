@@ -175,5 +175,7 @@ Para el payload recibido:
 
 Entonces nos queda 0100. Pero el CRC dice que es 0000, por lo tanto podemos detectar un error, y podemos ver que es en el tercer nibble (de der. a izq.).
 
-La ventaja del bit de paridad con respecto a XOR es que podemos identificar en que nibble ocurre el error. Pero tiene desventajes considerables:
+La ventaja del bit de paridad con respecto a XOR es que podemos identificar en que nibble ocurre el error. Pero tiene desventajas considerables:
+
+El payload se modificó pasando el tercer nibble de 0011 (3) a 0010 (2), se modificó solo un bit. Pero si se hubiesen modificado dos bits, por ejemplo pasando de 0011 (3) a 1010 (10) los bits de paridad hubiesen resultado 0000, y uno tendería a pensar que se recibió el dato correcto, pero no va a ser el caso. Esta es una muy fuerte debilidad de el bit de paridad.
 
