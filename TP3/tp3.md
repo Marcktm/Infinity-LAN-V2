@@ -150,6 +150,21 @@ Vamos a conectarnos a las dos VMs (en terminales distintas) y establecer conexi√
 
 ![chat-entre-VMs](/TP3/img/chat-entre-VMs.png)
 
+### Desplegando un servidor HTTP de forma remota
+
+Conectadonos a una de las VMs asignadas, vamos a generar un `index.html` dentro de la carpeta que generamos con el nombre de nuestro grupo.
+
+En la PC3:
+
+![index-enVM](/TP3/img/index_html_en_VM.png)
+
+Desplegamos el servidor en el puerto `5500` con el comando
+```bash
+python3 -m http.server 5500
+```
+
+![server-desplegaod-puerto-5500](/TP3/img/server-desplegado.png)
+
 
 ## Man In the Middle y Principio de Confidencialidad en las Redes de Computdoras
 
