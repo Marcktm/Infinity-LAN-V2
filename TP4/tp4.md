@@ -76,3 +76,50 @@ Para enviar el paquete primero utilizamos **netcat** y luego el programa **Packe
 
 Resultados:
 ![registro-mensajes-al-servidor](/TP4/img/documentacion-mensajes-al-servidor.png)
+
+## 3. Programando una aplicación de cliente que permite el envio de mensajes a través de una consola
+
+Viendo el [client.py](https://drive.google.com/file/d/10USHnqU7sAeFWQ4Y4Ma8kzydM6YnDhoe/view?usp=drive_link) que se nos dió en el Drive de la materia se nota que está incompleto: envía un solo mensaje hardcodeado con campos que no coinciden con el formato que espera el servidor (`"nombre"` y `"que_digo"` en lugar de `"group"` y `"payload"`), y se cierra inmediatamente.
+
+Vamos a convertirlo en un cliente iteractivo:
+
+1. El ejemplo tiene `HOST` y `PORT` hardcodeados. Necesitamos que el usuario los pueda ingresar, ya sea como argumentos de línea de comandos o preguntando al inicio. Vamos a utilizar `argparse` que es la forma estandar de Python para manejar argumentos de línea de comandos, nos permite hacer cosas como `python3 client.py --host 192.168.0.10 --port 5000` y si no pasamos nada usa valores por defecto.
+
+2. El servidor valida que el mensaje sea un diccionario JSON con las claves `"group"` (string) y `"payload"` (string). Si el formato no coincide, el servidor imprime `"ill formatted message"`. Entonces nuestro cliente tiene que armar el JSON con esa estructura exacta antes de enviarlo.
+
+3. En vez de mandar un solo mensaje y cerrar, necesitamos un loop que lea mensajes del usuario por consola y los envíe al servidor uno por uno, hasta que el usuario decida salir.
+
+Se puede ver como quedo el script en [client.py](/TP4/scripts/client.py).
+
+Para ejecutarlos primero hay que tener el servidor corriendo en otra terminal. Y despues en otra terminal ejecutamos el cliente:
+
+![](/TP4/img/servidor-cliente-defecto.png)
+
+## 4. Cifrando el payload
+
+Para hacer el cifrado del payload vamos a usar **AES (Advanced Encryption Standard)** que es el estándar de cifrado simétrico más usado en el mundo real (WiFi WPA2, HTTPS, VPNs, WhatsApp, etc.). Específicamente vamos a usar la implementación **Fernet** de la biblioteca `cryptography` de Python, que internamente usa **AES-128** en modo **CBC** con **HMAC-SHA256** para autenticación.
+
+Sus características principales son:
+
+- Cifrado simétrico: usa la misma clave para cifrar y descifrar. Ambas partes (cliente y servidor) deben compartir la clave de antemano.
+- **AES-128-CBC**: AES (Advanced Encryption Standard) es el algoritmo de cifrado por bloques más utilizado mundialmente. Opera con bloques de 128 bits. El modo **CBC** (**Cipher Block Chaining**) encadena cada bloque con el anterior, de modo que bloques idénticos de texto plano producen bloques cifrados distintos.
+- **IV** (**Vector de Inicialización**): Fernet genera un IV aleatorio de 128 bits para cada operación de cifrado. Esto garantiza que cifrar el mismo texto plano dos veces con la misma clave produce resultados diferentes, evitando ataques de análisis de patrones.
+- **HMAC-SHA256**: además de cifrar, Fernet calcula un código de autenticación (HMAC) sobre el texto cifrado. Esto permite al receptor verificar que el mensaje no fue alterado en tránsito (integridad) y que fue producido por alguien que conoce la clave (autenticación).
+- **Timestamp**: el token Fernet incluye una marca de tiempo, lo que permite implementar expiración de tokens si se desea.
+- **Salida en Base64**: el token cifrado se codifica en Base64, lo que lo hace seguro para incluir en formatos de texto como JSON, XML, o URLs.
+
+La estructura del token Fernet es: `Version || Timestamp || IV || Ciphertext || HMAC`.
+
+El flujo es así:
+
+1. Se genera una clave simétrica (una secuencia de bytes aleatoria). Esta clave la tienen que conocer tanto el cliente como el servidor.
+2. Para cifrar, se toma el texto plano, se lo pasa por Fernet con la clave, y devuelve un token cifrado en Base64.
+3. Para descifrar, se toma el token cifrado y la misma clave, y se recupera el texto original.
+
+Es cifrado simétrico: la misma clave sirve para cifrar y descifrar. Esto es distinto del cifrado asimétrico (como RSA) donde tenés un par de claves pública/privada.
+
+Primero generearemos la clave que vamos a usar:
+![](/TP4/img/clave-fernet.png)
+
+Hay que modificar [client.py](/TP4/scripts/client.py) para agregar la parte de cifrado.
+
