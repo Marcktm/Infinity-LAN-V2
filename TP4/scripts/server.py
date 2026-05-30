@@ -1,10 +1,23 @@
 import socket
 import threading
 import json
+from cryptography.fernet import Fernet, InvalidToken
 
 HOST = "0.0.0.0"
 PORT = 5000
 BUFFER_SIZE = 1024
+
+# Misma clave que usa el cliente
+ENCRYPTION_KEY = b"DWWSd3HYDEE7TMzxnNqtUQXdgLjdTsyY9FYzXodkp5M="
+
+def decrypt_payload(encrypted_payload: str, key: bytes) -> str:
+
+    # Descrifra el payload cifrado con Fernet
+    # Recibe el token Base64 como string, lo descifra y devuelve el texto plano
+
+    f = Fernet(key)
+    decrypted = f.decrypt(encrypted_payload.encode("utf-8"))
+    return decrypted.decode("utf-8")
 
 
 def handle_client(client_socket, client_address):
@@ -29,7 +42,19 @@ def handle_client(client_socket, client_address):
                     and isinstance(message["group"], str)
                     and isinstance(message["payload"], str)
                 ):
-                    print(f"{message['group']}: {message['payload']}")
+                    group = message["group"]
+                    encrypted_payload = message["payload"]
+
+                    # Mostramos lo que llegó cifrado
+                    print(f"[CIFRADO]       {group}: {encrypted_payload[:60]}...")
+
+                    # Intentamos descifrar el payload
+                    try:
+                        decrypted_payload = decrypt_payload(encrypted_payload, ENCRYPTION_KEY)
+                        print(f"[DESCIFRADO]    {group}: {decrypted_payload}")
+                    except InvalidToken:
+                        print(f"[ERROR] No se pudo descifrar el mensaje de {group}. "
+                              "¿Clave incorrecta o mensaje corrupto?")
                 else:
                     print(f"{ip_address} wants to send an ill formatted message.")
 

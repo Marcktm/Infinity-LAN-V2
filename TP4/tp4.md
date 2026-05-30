@@ -119,7 +119,22 @@ El flujo es así:
 Es cifrado simétrico: la misma clave sirve para cifrar y descifrar. Esto es distinto del cifrado asimétrico (como RSA) donde tenés un par de claves pública/privada.
 
 Primero generearemos la clave que vamos a usar:
+
 ![](/TP4/img/clave-fernet.png)
 
 Hay que modificar [client.py](/TP4/scripts/client.py) para agregar la parte de cifrado.
+
+![comunicacion-encriptado](/TP4/img/comunicacion-encriptada.png)
+
+## 5. Haciendo el servido capaz de decifrar el mensaje
+
+Al [server.py](/TP4/scripts/server.py) del Drive lo modificamos agregandole le capacidad de decifrar el payload. Para esto, la clave tiene que ser la misma que usa el cliente.
+
+Podemos ver como funciona:
+
+![descifrando-mensajes](/TP4/img/descifrado-de-paquetes.png)
+
+Y capturamos estos paquetes con Wireshark para ver que en efecto el payload esta siendo encriptado y el servidor es capaz de descrifrar el payload:
+
+![captura-paquetes-encriptados](/TP4/img/captura-paquete-encriptado.png)
 

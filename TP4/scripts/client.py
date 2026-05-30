@@ -7,6 +7,19 @@ from cryptography.fernet import Fernet
 # Se usaría un archivo de configuración, variable de entorno, o un key server.
 ENCRYPTION_KEY = b"DWWSd3HYDEE7TMzxnNqtUQXdgLjdTsyY9FYzXodkp5M="
 
+def encrypt_payload(payload: str, key: bytes) -> str:
+    # Cifra el payload usando Fernet 
+    # Recibe el texto plano como string, lo codifica a bytes, lo cifra
+    # y devuelve el token cifrado como string Base64
+    # El string Base64 es seguro para meter dentro de un JSON
+
+    f = Fernet(key)
+    # encrypt() recibe bytes y devuelve bytes (token Base64)
+    encrypted = f.encrypt(payload.encode("utf-8"))
+
+    # Convertimos los bytes base64 a string para poder meterlo en el JSON
+    return encrypted.decode("utf-8")
+
 def main():
     # Configuración de IP y puerto
     # Si no se pasan argumentos se usa los valores por defecto
@@ -34,6 +47,7 @@ def main():
     try:
         client.connect((host, port))
         print(f"Conectado al servidor {host}:{port}")
+        print(f"Cifrado: Fernet (AES-128-CBC + HMAC-SHA256)")
         print("Escribí mensajes para enviar. Escribí 'salir' para desconectarte.\n")
     except ConnectionRefusedError:
         print(f"No se pudo conectar a {host}:{port}. ¿Está corriendo el servidor?")
@@ -57,10 +71,13 @@ def main():
             if not payload:
                 continue
 
+            # Solo ciframos el payload, no el nombre del grupo
+            encrypted_payload = encrypt_payload(payload, ENCRYPTION_KEY)
+
             # Serializamos en el formato que espera el servidor
             message = {
                 "group": group,
-                "payload": payload
+                "payload": encrypted_payload # Cifrado
             }
 
             # json.dumps() convierte el diccionario a un string JSON
@@ -68,7 +85,10 @@ def main():
             json_data = json.dumps(message)
             client.sendall(json_data.encode("utf-8"))
 
-            print(f"   [Enviado] {json_data}")
+            print(f"   [Original] {payload}")
+            print(f"   [Cifrado]  {encrypted_payload[:60]}\n")
+            print(f"   [Enviado]  {json_data[:80]}...\n")
+            
 
     except KeyboardInterrupt:
         print("\nDesconectando (Ctrl+C)...")
